@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 import pickle
 from collections import UserDict
 from datetime import datetime, timedelta
@@ -71,7 +72,24 @@ class Record:
         return f"Contact name: {self.name.value}, phones: {'; '.join(p.value for p in self.phones)}"
 
 
+class OutputStrategy(ABC):
+    @abstractmethod
+    def display(self, data):
+        pass
+
+class ConsoleOutputStrategy(OutputStrategy):
+    def display(self, data):
+        print(data)
+
+
 class AddressBook(UserDict):
+    def __init__(self, output_strategy=None):
+        super().__init__()
+        self.output_strategy = output_strategy or ConsoleOutputStrategy()
+
+    def set_output_strategy(self, output_strategy):
+        self.output_strategy = output_strategy
+
     def add_record(self, record: Record):
         self.data[record.name.value] = record
 
@@ -210,7 +228,10 @@ def load_data():
 
 
 def main():
+
+    output_strategy = ConsoleOutputStrategy()  
     book = load_data()
+    
     print("Welcome to the assistant bot!")
     while True:
         user_input = input("Enter a command: ")
@@ -223,36 +244,36 @@ def main():
             break
 
         elif command == "hello":
-            print("How can I help you?")
+            output_strategy.display("How can I help you?")
 
         elif command == "add":
-            print(add_contact(args, book))
+            output_strategy.display(add_contact(args, book))
 
         elif command == "change":
-            print(change_contact(args, book))
+            output_strategy.display(change_contact(args, book))
 
         elif command == "phone":
-            print(show_phone(args, book))
+            output_strategy.display(show_phone(args, book))
 
         elif command == "all":
-            print(show_all(book))
+            output_strategy.display(show_all(book))
 
         elif command == "add-birthday":
-            print(add_birthday(args, book))
+            output_strategy.display(add_birthday(args, book))
 
         elif command == "show-birthday":
-            print(show_birthday(args, book))
+            output_strategy.display(show_birthday(args, book))
 
         elif command == "birthdays":
             birthdays = book.get_upcoming_birthdays()
             if not len(birthdays):
-                print("There are no upcoming birthdays.")
+                output_strategy.display("There are no upcoming birthdays.")
                 continue
             for day in birthdays:
-                print(f"{day}")
+                output_strategy.display(f"{day}")
 
         else:
-            print("Invalid command.")
+            output_strategy.display("Invalid command.")
 
 
 if __name__ == "__main__":
